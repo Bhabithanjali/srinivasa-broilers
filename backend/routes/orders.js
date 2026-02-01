@@ -1,33 +1,28 @@
-const router = require('express').Router();
-const Order = require('../models/Order');
+const express = require("express");
+const router = express.Router();
+const Order = require("../models/Order");
 
-// create order
-router.post('/', async (req, res) => {
-  const order = new Order(req.body);
-  await order.save();
-  res.json(order);
+// ✅ GET all orders (SAFE)
+router.get("/", async (req, res) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    console.error("Fetch orders error:", err.message);
+    res.status(500).json({ error: "Failed to fetch orders" });
+  }
 });
 
-// get all orders
-router.get('/', async (req, res) => {
-  const orders = await Order.find().sort({ createdAt: -1 });
-  res.json(orders);
-});
-
-// update status
-router.put('/:id', async (req, res) => {
-  const order = await Order.findByIdAndUpdate(
-    req.params.id,
-    { status: req.body.status },
-    { new: true }
-  );
-  res.json(order);
-});
-
-// delete order
-router.delete('/:id', async (req, res) => {
-  await Order.findByIdAndDelete(req.params.id);
-  res.json({ success: true });
+// ✅ POST new order
+router.post("/", async (req, res) => {
+  try {
+    const newOrder = new Order(req.body);
+    const savedOrder = await newOrder.save();
+    res.status(201).json(savedOrder);
+  } catch (err) {
+    console.error("Create order error:", err.message);
+    res.status(500).json({ error: "Failed to create order" });
+  }
 });
 
 module.exports = router;
