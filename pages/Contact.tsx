@@ -33,7 +33,7 @@ export const Contact: React.FC = () => {
     hensCount: '',
     deliveryTime: '',
     address: '',
-    whatsapp: '', // 10 digits only
+    whatsapp: '',
   });
 
   const [formErrors, setFormErrors] = useState({
@@ -93,26 +93,26 @@ export const Contact: React.FC = () => {
     setSubmitSuccess(null);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const existingOrders = JSON.parse(
-        localStorage.getItem('orders') || '[]'
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/orders`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            customerName: formData.customerName,
+            hensCount: Number(formData.hensCount),
+            deliveryTime: formData.deliveryTime || 'Not specified',
+            address: formData.address || 'Not specified',
+            whatsapp: `91${formData.whatsapp}`,
+          }),
+        }
       );
 
-      const newOrder = {
-        customerName: formData.customerName,
-        hensCount: formData.hensCount,
-        deliveryTime: formData.deliveryTime || 'Not specified',
-        address: formData.address || 'Not specified',
-        whatsapp: `91${formData.whatsapp}`, // ✅ INDIA CODE FIXED
-        status: 'Pending',
-        createdAt: new Date().toISOString(),
-      };
-
-      localStorage.setItem(
-        'orders',
-        JSON.stringify([...existingOrders, newOrder])
-      );
+      if (!response.ok) {
+        throw new Error('Failed to place order');
+      }
 
       setSubmitSuccess(true);
       setFormData({
@@ -122,7 +122,8 @@ export const Contact: React.FC = () => {
         address: '',
         whatsapp: '',
       });
-    } catch {
+    } catch (error) {
+      console.error(error);
       setSubmitSuccess(false);
     } finally {
       setIsSubmitting(false);
@@ -222,7 +223,7 @@ export const Contact: React.FC = () => {
                 rows={3}
               />
 
-              {/* WHATSAPP INPUT */}
+              {/* WHATSAPP */}
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Customer WhatsApp Number
@@ -234,20 +235,15 @@ export const Contact: React.FC = () => {
                   <input
                     type="tel"
                     value={formData.whatsapp}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '');
+                    onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        whatsapp: value,
-                      }));
-                      setFormErrors((prev) => ({
-                        ...prev,
-                        whatsapp: '',
-                      }));
-                    }}
+                        whatsapp: e.target.value.replace(/\D/g, ''),
+                      }))
+                    }
                     maxLength={10}
                     placeholder="10-digit number"
-                    className="w-full border rounded-r-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full border rounded-r-md px-3 py-2"
                     required
                   />
                 </div>
