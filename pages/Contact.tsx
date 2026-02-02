@@ -98,12 +98,13 @@ export const Contact: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customerName: formData.customerName,
-          hensCount: Number(formData.hensCount),
-          deliveryTime: formData.deliveryTime || 'Not specified',
-          address: formData.address || 'Not specified',
-          whatsapp: `91${formData.whatsapp}`,
-        }),
+  name: formData.customerName,              // ✅ FIXED
+  quantity: Number(formData.hensCount),     // ✅ FIXED
+  phone: `91${formData.whatsapp}`,          // ✅ FIXED
+  deliveryTime: formData.deliveryTime || "Not specified",
+  address: formData.address || "Not specified",
+}),
+  
       });
 
       if (!response.ok) {
