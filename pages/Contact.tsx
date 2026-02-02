@@ -36,7 +36,7 @@ export const Contact: React.FC = () => {
     whatsapp: '',
   });
 
-  const [formErrors, setFormErrors] = useState({
+  const [errors, setErrors] = useState({
     customerName: '',
     hensCount: '',
     whatsapp: '',
@@ -51,38 +51,36 @@ export const Contact: React.FC = () => {
   ) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
-    setFormErrors((prev) => ({ ...prev, [id]: '' }));
+    setErrors((prev) => ({ ...prev, [id]: '' }));
   };
 
   const validateForm = () => {
-    let isValid = true;
-    const errors = { customerName: '', hensCount: '', whatsapp: '' };
+    let valid = true;
+    const newErrors = { customerName: '', hensCount: '', whatsapp: '' };
 
     if (!formData.customerName.trim()) {
-      errors.customerName = 'Customer name is required';
-      isValid = false;
+      newErrors.customerName = 'Customer name required';
+      valid = false;
     }
 
     if (!formData.hensCount.trim()) {
-      errors.hensCount = 'Number of hens is required';
-      isValid = false;
+      newErrors.hensCount = 'Number of hens required';
+      valid = false;
     }
 
-    if (!formData.whatsapp.trim()) {
-      errors.whatsapp = 'WhatsApp number is required';
-      isValid = false;
-    } else if (!/^\d{10}$/.test(formData.whatsapp)) {
-      errors.whatsapp = 'Enter a valid 10-digit number';
-      isValid = false;
+    if (!/^\d{10}$/.test(formData.whatsapp)) {
+      newErrors.whatsapp = 'Enter valid 10-digit WhatsApp number';
+      valid = false;
     }
 
-    setFormErrors(errors);
-    return isValid;
+    setErrors(newErrors);
+    return valid;
   };
 
   // ---------------- SUBMIT ----------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('✅ SUBMIT CLICKED');
 
     if (!validateForm()) {
       setSubmitSuccess(false);
@@ -93,25 +91,23 @@ export const Contact: React.FC = () => {
     setSubmitSuccess(null);
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/orders`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            customerName: formData.customerName,
-            hensCount: Number(formData.hensCount),
-            deliveryTime: formData.deliveryTime || 'Not specified',
-            address: formData.address || 'Not specified',
-            whatsapp: `91${formData.whatsapp}`,
-          }),
-        }
-      );
+      const API_URL = import.meta.env.VITE_API_URL;
+      console.log('API URL:', API_URL);
+
+      const response = await fetch(`${API_URL}/api/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: formData.customerName,
+          hensCount: Number(formData.hensCount),
+          deliveryTime: formData.deliveryTime || 'Not specified',
+          address: formData.address || 'Not specified',
+          whatsapp: `91${formData.whatsapp}`,
+        }),
+      });
 
       if (!response.ok) {
-        throw new Error('Failed to place order');
+        throw new Error('Failed to submit order');
       }
 
       setSubmitSuccess(true);
@@ -122,8 +118,8 @@ export const Contact: React.FC = () => {
         address: '',
         whatsapp: '',
       });
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       setSubmitSuccess(false);
     } finally {
       setIsSubmitting(false);
@@ -133,7 +129,7 @@ export const Contact: React.FC = () => {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-20 text-center text-gray-500">
-        Loading content...
+        Loading...
       </div>
     );
   }
@@ -147,54 +143,47 @@ export const Contact: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {/* CONTACT INFO */}
           <div className="bg-white shadow-lg rounded-xl p-8">
-            <h3 className="text-3xl font-bold text-primary-dark mb-6">
-              Our Contact Details
-            </h3>
+            <h3 className="text-2xl font-bold mb-4">Our Contact Details</h3>
 
-            <address className="not-italic space-y-5 text-gray-700 text-lg">
+            <address className="not-italic space-y-3 text-gray-700">
               <p className="flex items-center">
-                <FaUser className="text-primary mr-3 text-2xl" />
-                {contactDetails.name}
+                <FaUser className="mr-3" /> {contactDetails.name}
               </p>
               <p className="flex items-center">
-                <FaPhone className="text-primary mr-3 text-2xl" />
-                {contactDetails.phone}
+                <FaPhone className="mr-3" /> {contactDetails.phone}
               </p>
               <p className="flex items-center">
-                <FaWhatsapp className="text-green-600 mr-3 text-2xl" />
+                <FaWhatsapp className="mr-3 text-green-600" />{' '}
                 {contactDetails.whatsapp}
               </p>
               <p className="flex items-center">
-                <FaEnvelope className="text-primary mr-3 text-2xl" />
-                {contactDetails.email}
+                <FaEnvelope className="mr-3" /> {contactDetails.email}
               </p>
               <p className="flex items-center">
-                <FaMapMarkerAlt className="text-primary mr-3 text-2xl" />
-                {contactDetails.address}
+                <FaMapMarkerAlt className="mr-3" /> {contactDetails.address}
               </p>
             </address>
 
-            <div className="mt-10">
+            <div className="mt-6">
               <DeliveryTimingsCard
                 timings={deliveryTimings}
-                title="Our Delivery Timings"
+                title="Delivery Timings"
               />
             </div>
           </div>
 
           {/* ORDER FORM */}
           <div className="bg-white shadow-lg rounded-xl p-8">
-            <h3 className="text-3xl font-bold text-primary-dark mb-6">
-              Place Your Order
-            </h3>
+            <h3 className="text-2xl font-bold mb-4">Place Your Order</h3>
 
+            {/* ✅ FORM START */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
                 id="customerName"
                 label="Customer Name"
                 value={formData.customerName}
                 onChange={handleChange}
-                error={formErrors.customerName}
+                error={errors.customerName}
                 required
               />
 
@@ -204,7 +193,7 @@ export const Contact: React.FC = () => {
                 type="number"
                 value={formData.hensCount}
                 onChange={handleChange}
-                error={formErrors.hensCount}
+                error={errors.hensCount}
                 required
               />
 
@@ -220,50 +209,52 @@ export const Contact: React.FC = () => {
                 label="Delivery Address (Optional)"
                 value={formData.address}
                 onChange={handleChange}
-                rows={3}
               />
 
-              {/* WHATSAPP */}
+              {/* WhatsApp */}
               <div>
-                <label className="block text-sm font-medium mb-1">
-                  Customer WhatsApp Number
-                </label>
+                <label className="block mb-1">WhatsApp Number</label>
                 <div className="flex">
-                  <span className="px-3 flex items-center bg-gray-100 border border-r-0 rounded-l-md">
+                  <span className="px-3 bg-gray-100 border border-r-0 rounded-l">
                     +91
                   </span>
                   <input
                     type="tel"
                     value={formData.whatsapp}
                     onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
+                      setFormData({
+                        ...formData,
                         whatsapp: e.target.value.replace(/\D/g, ''),
-                      }))
+                      })
                     }
                     maxLength={10}
-                    placeholder="10-digit number"
-                    className="w-full border rounded-r-md px-3 py-2"
+                    className="w-full border rounded-r px-3 py-2"
                     required
                   />
                 </div>
-                {formErrors.whatsapp && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {formErrors.whatsapp}
-                  </p>
+                {errors.whatsapp && (
+                  <p className="text-red-500 text-sm">{errors.whatsapp}</p>
                 )}
               </div>
 
+              {/* ✅ SUBMIT BUTTON MUST BE INSIDE FORM */}
               <Button type="submit" className="w-full" isLoading={isSubmitting}>
                 Submit Order
               </Button>
 
-              {submitSuccess && (
+              {submitSuccess === true && (
                 <p className="text-green-600 text-center">
-                  Order placed successfully!
+                  Order placed successfully ✅
+                </p>
+              )}
+
+              {submitSuccess === false && (
+                <p className="text-red-600 text-center">
+                  Failed to place order ❌
                 </p>
               )}
             </form>
+            {/* ✅ FORM END */}
           </div>
         </div>
       </div>
